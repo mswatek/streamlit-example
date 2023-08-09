@@ -1,3 +1,5 @@
 altair
 pandas
 streamlit
+yahoofantasy
+numpy
