@@ -1,23 +1,35 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from yahoofantasy import Context
 
-st.title('Uber pickups in NYC')
 
-DATE_COLUMN = 'date/time'
-DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
-         'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
+ctx = Context()
 
-def load_data(nrows):
-    data = pd.read_csv(DATA_URL, nrows=nrows)
-    lowercase = lambda x: str(x).lower()
-    data.rename(lowercase, axis='columns', inplace=True)
-    data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
-    return data
+st.title('fantasy baseball lets goooo')
 
-# Create a text element and let the reader know the data is loading.
-data_load_state = st.text('Loading data...')
-# Load 10,000 rows of data into the dataframe.
-data = load_data(10000)
-# Notify the reader that the data was successfully loaded.
-data_load_state.text('Loading data...done!')
+
+# Get all baseball leagues I belonged to in 2019
+#for league in ctx.get_leagues("mlb", 2023):
+#   print("~~~~~~~~ LEAGUE ~~~~~~~~")
+#    print(f"{league.id} - {league.name} ({league.league_type})")
+#    print()
+
+league = Context().get_leagues("mlb", 2023)[0]
+
+df = pd.DataFrame({'team':[], 'cat':[], 'stat':[]})
+df2 = pd.DataFrame({'team':[], 'cat':[], 'stat':[]})
+week_18 = league.weeks()[17]
+for matchup in week_18.matchups:
+    for team1_stat, team2_stat in zip(matchup.team1_stats, matchup.team2_stats):
+        df.loc[len(df)] = [matchup.team1.name, team1_stat.display, team1_stat.value]
+        df2.loc[len(df2)] = [matchup.team2.name, team2_stat.display, team2_stat.value]
+
+df_combined = pd.concat([df,df2])
+df_wide = pd.pivot(df_combined, index='team', columns='cat', values='stat')
+
+cols = ['H/AB', 'R', 'HR', 'RBI', 'SB', 'OBP', 'IP', 'ERA', 'WHIP', 'K', 'QS', 'SV+H']
+df_new = df_wide[cols]
+
+st.write(df_wide)
+st.write(df_new)
